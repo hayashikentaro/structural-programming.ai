@@ -338,24 +338,30 @@ of: A -> F<A>
 ### TypeScriptコード
 
 ```ts
-type Option<A> = A | null
+type Option<A> =
+  | { type: "none" }
+  | { type: "some"; value: A }
 
 const ofOption = <A>(value: A): Option<A> =>
-  value
+  ({ type: "some", value })
 
 const flatMapOption = <A, B>(
   fa: Option<A>,
   f: (a: A) => Option<B>
 ): Option<B> =>
-  fa === null ? null : f(fa)
+  fa.type === "none" ? fa : f(fa.value)
 
 const parseNumber = (s: string): Option<number> => {
   const n = Number(s)
-  return Number.isNaN(n) ? null : n
+  return Number.isNaN(n)
+    ? { type: "none" }
+    : { type: "some", value: n }
 }
 
 const inverse = (n: number): Option<number> =>
-  n === 0 ? null : 1 / n
+  n === 0
+    ? { type: "none" }
+    : { type: "some", value: 1 / n }
 
 const input: Option<string> =
   ofOption("2")
@@ -374,6 +380,12 @@ const result: Option<number> =
 `null` の扱いは消えていない。
 
 `flatMapOption` の規則として閉じ込められている。
+
+ここで tagged union を使っているのは、実装上の趣味ではない。
+
+`A | null` を `Option<A>` と見なす説明は導入としては便利だが、`A` 自身が `null` を含みうる場合、`of` と Monad 則の説明が不安定になる。
+
+Monad の章では、文脈と値の境界を明示的に分けた方がよい。
 
 ---
 
