@@ -2,7 +2,7 @@
 
 ---
 
-## Chapter 9：なぜプログラムは壊れるのか
+## Chapter 15：なぜプログラムは壊れるのか
 
 ---
 
@@ -47,7 +47,7 @@
 
 ---
 
-## Chapter 10：部分関数
+## Chapter 16：部分関数
 
 ---
 
@@ -100,7 +100,7 @@ const head = (xs: number[]): Option<number> =>
 
 ---
 
-## Chapter 11：例外
+## Chapter 17：例外
 
 ---
 
@@ -163,7 +163,7 @@ const map = <E, A, B>(
 
 ---
 
-## Chapter 12：状態
+## Chapter 18：状態
 
 ---
 
@@ -222,7 +222,7 @@ const increment: State<number, number> = (s) => {
 
 ---
 
-## Chapter 13：統一的理解
+## Chapter 19：統一的理解
 
 ---
 
@@ -242,7 +242,7 @@ const increment: State<number, number> = (s) => {
 
 ---
 
-## Chapter 14：Effect
+## Chapter 20：Effect
 
 ---
 
@@ -269,7 +269,7 @@ const increment: State<number, number> = (s) => {
 
 ---
 
-## Chapter 15：まとめ
+## Chapter 21：まとめ
 
 ---
 

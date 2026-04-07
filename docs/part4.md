@@ -2,7 +2,7 @@
 
 ---
 
-## Chapter 21：なぜMonadが必要か
+## Chapter 27：なぜMonadが必要か
 
 ---
 
@@ -226,7 +226,7 @@ F<F<A>>
 
 ---
 
-## Chapter 22：flatMap
+## Chapter 28：flatMap
 
 ---
 
@@ -415,7 +415,7 @@ Monad は合成を回復する。
 
 ---
 
-## Chapter 23：Monad則
+## Chapter 29：Monad則
 
 ---
 
@@ -599,7 +599,7 @@ Monad則は、抽象を実用に耐えるものにする。
 
 ---
 
-## Chapter 24：具体例
+## Chapter 30：具体例
 
 ---
 
@@ -752,7 +752,7 @@ F<A> -> (A -> F<B>) -> F<B>
 
 ---
 
-## Chapter 25：Functorとの関係
+## Chapter 31：Functorとの関係
 
 ---
 

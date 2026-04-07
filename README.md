@@ -78,17 +78,6 @@ A → B
 
 ---
 
-## 構成
-
-```id="2oz6kp"
-docs/      理論（テキスト）
-src/       最小実装（Option / Result / State）
-tests/     法則の検証
-examples/  使用例
-```
-
----
-
 ## Laws as Tests（重要）
 
 本プロジェクトでは、数学的法則をテストとして扱う。
@@ -110,16 +99,6 @@ examples/  使用例
 これは「挙動のテスト」ではない。
 
 👉 **構造の検証である**
-
----
-
-## セットアップ
-
-```bash id="0qb56p"
-npm install
-npm run build
-npm run test
-```
 
 ---
 

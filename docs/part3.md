@@ -2,7 +2,7 @@
 
 ---
 
-## Chapter 16：Functorとは何か
+## Chapter 22：Functorとは何か
 
 ---
 
@@ -189,7 +189,7 @@ Functor は、その最初の答えである。
 
 ---
 
-## Chapter 17：mapの本質
+## Chapter 23：mapの本質
 
 ---
 
@@ -363,7 +363,7 @@ Functor を導入するとは、変換の自由と保存の制約を同時に設
 
 ---
 
-## Chapter 18：Functor則
+## Chapter 24：Functor則
 
 ---
 
@@ -540,7 +540,7 @@ AI はシグネチャに合う関数を生成できる。
 
 ---
 
-## Chapter 19：TypeScriptでの表現
+## Chapter 25：TypeScriptでの表現
 
 ---
 
@@ -704,7 +704,7 @@ TypeScript は Functor を学ぶのに十分な言語である。
 
 ---
 
-## Chapter 20：実装と検証
+## Chapter 26：実装と検証
 
 ---
 
