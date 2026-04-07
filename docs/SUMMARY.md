@@ -58,10 +58,10 @@
   - [Chapter 41：Free構造](part7.md#chapter-41free構造)
   - [Chapter 42：DSL設計](part7.md#chapter-42dsl設計)
 
-- Part 8：実践
-  - Chapter 43：API設計
-  - Chapter 44：フロントエンド
-  - Chapter 45：バックエンド
+- [Part 8：実践](part8.md)
+  - [Chapter 43：API設計](part8.md#chapter-43api設計)
+  - [Chapter 44：フロントエンド](part8.md#chapter-44フロントエンド)
+  - [Chapter 45：バックエンド](part8.md#chapter-45バックエンド)
 
 - Part 9：AI時代の開発
   - Chapter 46：vibeコーディング
