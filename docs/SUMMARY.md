@@ -63,8 +63,8 @@
   - [Chapter 44：フロントエンド](part8.md#chapter-44フロントエンド)
   - [Chapter 45：バックエンド](part8.md#chapter-45バックエンド)
 
-- Part 9：AI時代の開発
-  - Chapter 46：vibeコーディング
-  - Chapter 47：役割分担
-  - Chapter 48：プロンプト設計
-  - Chapter 49：レビュー戦略
+- [Part 9：AI時代の開発](part9.md)
+  - [Chapter 46：vibeコーディング](part9.md#chapter-46vibeコーディング)
+  - [Chapter 47：役割分担](part9.md#chapter-47役割分担)
+  - [Chapter 48：プロンプト設計](part9.md#chapter-48プロンプト設計)
+  - [Chapter 49：レビュー戦略](part9.md#chapter-49レビュー戦略)
