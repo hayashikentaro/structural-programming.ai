@@ -41,17 +41,17 @@
   - [Chapter 30：具体例](part4.md#chapter-30具体例)
   - [Chapter 31：Functorとの関係](part4.md#chapter-31functorとの関係)
 
-- Part 5：型と論理
-  - Chapter 32：型は制約である
-  - Chapter 33：ADT
-  - Chapter 34：不変条件
-  - Chapter 35：ドメインモデリング
+- [Part 5：型と論理](part5.md)
+  - [Chapter 32：型は制約である](part5.md#chapter-32型は制約である)
+  - [Chapter 33：ADT](part5.md#chapter-33adt)
+  - [Chapter 34：不変条件](part5.md#chapter-34不変条件)
+  - [Chapter 35：ドメインモデリング](part5.md#chapter-35ドメインモデリング)
 
-- Part 6：副作用とEffect
-  - Chapter 36：副作用とは何か
-  - Chapter 37：遅延評価
-  - Chapter 38：Effectシステム
-  - Chapter 39：effect-tsとの接続
+- [Part 6：副作用とEffect](part6.md)
+  - [Chapter 36：副作用とは何か](part6.md#chapter-36副作用とは何か)
+  - [Chapter 37：遅延評価](part6.md#chapter-37遅延評価)
+  - [Chapter 38：Effectシステム](part6.md#chapter-38effectシステム)
+  - [Chapter 39：effect-tsとの接続](part6.md#chapter-39effect-tsとの接続)
 
 - Part 7：抽象の起源
   - Chapter 40：随伴の直感
