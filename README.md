@@ -9,12 +9,6 @@
 
 ## 概要
 
-このプロジェクトは数学的構造主義に着想を得ている：
-意味は値そのものではなく、関係から生まれる。
-
-This project is inspired by mathematical structuralism:
-meaning arises from relations, not values.
-
 **structural-programming.ai** は、
 プログラミングを「構文」ではなく「構造」として学ぶための教材・コードベースです。
 
@@ -24,6 +18,9 @@ AI時代において、コード生成はコモディティ化しています。
 * 合成可能な設計
 * 正しい抽象
 * 数学的に破綻しない構造
+
+このプロジェクトは数学的構造主義に着想を得ている：
+意味は値そのものではなく、関係から生まれる。
 
 ---
 
