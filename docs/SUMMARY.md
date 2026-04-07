@@ -53,10 +53,10 @@
   - [Chapter 38：Effectシステム](part6.md#chapter-38effectシステム)
   - [Chapter 39：effect-tsとの接続](part6.md#chapter-39effect-tsとの接続)
 
-- Part 7：抽象の起源
-  - Chapter 40：随伴の直感
-  - Chapter 41：Free構造
-  - Chapter 42：DSL設計
+- [Part 7：抽象の起源](part7.md)
+  - [Chapter 40：随伴の直感](part7.md#chapter-40随伴の直感)
+  - [Chapter 41：Free構造](part7.md#chapter-41free構造)
+  - [Chapter 42：DSL設計](part7.md#chapter-42dsl設計)
 
 - Part 8：実践
   - Chapter 43：API設計
