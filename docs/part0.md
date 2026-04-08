@@ -307,7 +307,7 @@ Functor や Monad を、名前としてではなく、
 
 ---
 
-## Chapter 5：バグの再定義
+## Chapter 5：バグをどう見るか
 
 ---
 
@@ -331,7 +331,7 @@ Functor や Monad を、名前としてではなく、
 
 ---
 
-## Chapter 6：型の役割
+## Chapter 6：型をどう読むか
 
 ---
 
@@ -355,7 +355,7 @@ Functor や Monad を、名前としてではなく、
 
 ---
 
-## Chapter 7：AI時代のプログラマ
+## Chapter 7：AI時代に何が残るか
 
 ---
 

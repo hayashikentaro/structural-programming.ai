@@ -5,9 +5,9 @@
   - [Chapter 2：なぜ従来の学習は非効率なのか](part0.md#chapter-2なぜ従来の学習は非効率なのか)
   - [Chapter 3：この本の読み方](part0.md#chapter-3この本の読み方)
   - [Chapter 4：本書のゴール](part0.md#chapter-4本書のゴール)
-  - [Chapter 5：バグの再定義](part0.md#chapter-5バグの再定義)
-  - [Chapter 6：型の役割](part0.md#chapter-6型の役割)
-  - [Chapter 7：AI時代のプログラマ](part0.md#chapter-7ai時代のプログラマ)
+  - [Chapter 5：バグをどう見るか](part0.md#chapter-5バグをどう見るか)
+  - [Chapter 6：型をどう読むか](part0.md#chapter-6型をどう読むか)
+  - [Chapter 7：AI時代に何が残るか](part0.md#chapter-7ai時代に何が残るか)
   - [Chapter 8：まとめ](part0.md#chapter-8まとめ)
 
 - [Part 1：写像としてのプログラム](part1.md)
