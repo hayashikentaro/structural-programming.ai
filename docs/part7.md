@@ -1,426 +1,610 @@
-# Part 7：実践
+# Part 7：Effectを現場へ置く
 
-抽象を学んだあとに起こりがちな誤解がある。
+この Part は、[Chapter 39：effect-tsとの接続](part6.md#chapter-39effect-tsとの接続) をさらに実務寄りに掘り下げるための実践編である。
 
-それは、実務とは抽象を忘れる場面だ、という誤解である。
+本編では、`effect-ts` を
 
-実際は逆だ。
+> 副作用を値として持ち、合成してから実行する
 
-実務こそ、構造を失うとすぐに壊れる。
+ための接続点として紹介した。
 
-API は境界を誤ると永続的に破綻する。
-フロントエンドは状態の流し方を誤ると局所修正不能になる。
-バックエンドは副作用と依存を隠すと変更コストが爆発する。
+ここではその先へ進む。
 
-Part 7 では、これまでの議論を「現場でどこに置くか」という問いへ落とし込む。
+問いは次のようになる。
 
-重要なのは、抽象名を持ち込むことではない。
+- 実務では `Effect` をどこから導入するのか
+- `Promise` とどう役割を分けるのか
+- 依存注入は `Layer` でどう読むのか
+- エラーは例外ではなく、どう接続面へ出すのか
+- Web アプリや API サーバーでは、どこで実行すればよいのか
 
-> 壊れない接続面をどう設計するか
+重要なのは、`effect-ts` を「高機能な非同期ライブラリ」として覚えることではない。
 
-を、実務の言葉で言い直すことである。
+むしろ、
 
-ここでは、一つの小さな継続ケースを意識して読むと分かりやすい。
+> 失敗・依存・実行境界を、コード上の構造として固定するための装置
 
-たとえば「ユーザー登録」を考える。
-
-- Part 5 では、未検証の入力と検証済みの値を分ける
-- Part 6 では、保存や通知を effect として分離する
-- Part 7 では、その境界を API や UI やバックエンドにどう置くかを見る
-
-つまり実務への接続とは、新しい話題へ飛ぶことではない。
-
-これまで分解してきた構造を、現場の接続面へ戻すことである。
+として読むことである。
 
 ---
 
-## Chapter 43：API設計
+## 1. 何が嬉しいのか
 
-### 問題提起
+`Promise` ベースのアプリケーションが壊れやすいのは、非同期だからではない。
 
-多くの API は、動く。
+壊れやすいのは、次のものが関数の外に漏れやすいからだ。
 
-しかし長く使うと壊れる。
+- どこで失敗するのか
+- 何に依存しているのか
+- リトライしてよいのか
+- ログやトレースをどこで入れるのか
+- リソースをいつ閉じるのか
 
-その理由は性能でもスケールでもなく、境界の弱さであることが多い。
-
-たとえば次のような API を考える。
+たとえば次の関数は、すぐに書ける。
 
 ```ts
-type CreateUserRequest = {
-  name?: string
-  email?: string
-  age?: number
+const registerUser = async (input: {
+  name: string
+  email: string
+}) => {
+  const saved = await db.insertUser(input)
+  await mailer.sendWelcome(input.email)
+  return saved.id
 }
-
-type CreateUserResponse = any
 ```
 
-これは確かに素早く書ける。
+しかしこの形では、少なくとも次が隠れている。
 
-だが、この設計は呼び出し側へ曖昧さを輸出している。
+- `db` と `mailer` に依存している
+- DB 障害とメール障害が区別されない
+- 途中失敗時の振る舞いが型に出ない
+- テスト時の差し替え境界がコードから読みにくい
 
-- `name` は必須なのか
-- `email` は検証済みなのか
-- `age` は未成年を許すのか
-- 失敗はどう返るのか
+`effect-ts` を導入する意味は、これらを一気に「見える形」に戻すことにある。
 
-つまりこの API は「何でも受けるが、意味は後で考える」という設計になっている。
+---
 
-この章では、継続ケースとして「ユーザー登録」を扱う。
+## 2. 最小の読み方
 
-着目したいのは、登録処理そのものより、
-どの時点で入力を検証済みの値へ変え、どの時点で失敗を構造化するかである。
+まずは、`Effect` を次のように読む。
 
-### 直感的説明
+```text
+Effect<成功, 失敗, 依存>
+```
 
-よい API は、自由度が高い API ではない。
-
-誤用可能性が低い API である。
-
-そのためには、
-
-- 入力を絞る
-- 出力を明示する
-- 失敗を構造化する
-- 状態遷移を隠さない
-
-必要がある。
-
-API は通信仕様ではない。
-
-ドメインの合成条件を外部へ公開する接続面である。
-
-### 抽象の導入
-
-これまでの言葉で言えば、API 設計とは
-
-- どの対象を公開するか
-- どの射を許すか
-- どの失敗を `Result` として表すか
-
-を決める作業である。
-
-ここで `DTO` とドメイン型を分けることが重要になる。
-
-外部入力は汚れている。
-
-だから受信時点では、まだ検証済みの型にしてはならない。
-
-### TypeScriptコード
+たとえば
 
 ```ts
-type CreateUserRequestDto = {
+Effect.Effect<User, UserNotFound, UserRepository>
+```
+
+は、
+
+- 成功すると `User`
+- 失敗すると `UserNotFound`
+- 実行には `UserRepository` が必要
+
+という意味になる。
+
+これだけで、`Promise<User>` より読めることがかなり増える。
+
+特に実務で重要なのは、成功値 `User` よりも、
+
+- 何が要るか
+- 何が壊れるか
+
+が同時に型へ乗ることだ。
+
+---
+
+## 3. どこから導入するか
+
+全面導入を最初に目指すと、たいてい失敗する。
+
+実務では、次の順で入れるとよい。
+
+1. I/O の濃いユースケースから始める
+2. 例外を `Effect.fail` / `Effect.tryPromise` へ押し戻す
+3. 依存を引数の束ではなく service として切り出す
+4. 実行境界を HTTP handler や CLI entrypoint に限定する
+
+逆に、最初から全関数を `Effect` にする必要はない。
+
+純粋関数はそのままでよい。
+
+```ts
+type ValidationError = {
+  message: string
+}
+
+type ValidEmail = string & { readonly _tag: "ValidEmail" }
+
+const validateEmail = (
+  input: string
+): Effect.Effect<ValidEmail, ValidationError> =>
+  input.includes("@")
+    ? Effect.succeed(input as ValidEmail)
+    : Effect.fail({ message: "invalid email" })
+```
+
+ここで大事なのは、「何でも `Effect` で包む」ことではない。
+
+失敗や依存や実行時条件を、曖昧なままにしないことである。
+
+---
+
+## 4. 依存注入を Layer として読む
+
+オブジェクト指向の DI では、依存注入はしばしば
+
+- コンストラクタ引数
+- DI コンテナ
+- mock 差し替え
+
+として理解される。
+
+`effect-ts` では、それを
+
+> 計算が必要とする環境を、型で表したまま後から供給する
+
+と読める。
+
+これが `Layer` の直感である。
+
+```ts
+import { Context, Effect, Layer } from "effect"
+
+type User = {
+  id: string
+  name: string
+  email: string
+}
+
+class UserRepository extends Context.Tag("UserRepository")<
+  UserRepository,
+  {
+    readonly findById: (
+      id: string
+    ) => Effect.Effect<User, UserNotFound>
+    readonly save: (
+      user: User
+    ) => Effect.Effect<{ userId: string }, SaveUserError>
+  }
+>() {}
+
+type UserNotFound = {
+  type: "UserNotFound"
+}
+
+type SaveUserError = {
+  type: "SaveUserError"
+  message: string
+}
+
+const inMemoryUserRepository = Layer.succeed(UserRepository, {
+  findById: (id) =>
+    Effect.fail({ type: "UserNotFound" } as const),
+  save: (user) =>
+    Effect.succeed({ userId: user.id }),
+})
+```
+
+ここで `Layer` は「DI の設定ファイル」ではない。
+
+依存の供給そのものを、合成可能な値として扱う仕組みである。
+
+この見方に立つと、
+
+- 本番実装
+- テスト実装
+- ローカル開発用実装
+
+を、同じ接続面の上で差し替えられる。
+
+---
+
+## 5. Repository は interface ではなく effectful な接続面
+
+実務では repository や gateway を定義することが多い。
+
+ここで重要なのは、「戻り値だけ async にする」ことではない。
+
+失敗も接続面に出すべきである。
+
+```ts
+type DuplicateEmail = {
+  type: "DuplicateEmail"
+}
+
+type DatabaseUnavailable = {
+  type: "DatabaseUnavailable"
+}
+
+class UserRepository extends Context.Tag("UserRepository")<
+  UserRepository,
+  {
+    readonly insert: (
+      user: ValidUser
+    ) => Effect.Effect<
+      { userId: string },
+      DuplicateEmail | DatabaseUnavailable
+    >
+  }
+>() {}
+```
+
+この形の強さは、`insert` がただの「保存メソッド」ではなく、
+
+- 何を受け取るか
+- 何に成功するか
+- どう壊れるか
+
+まで含んだ接続面として読めることにある。
+
+本書の言葉でいえば、
+
+> 射そのものに、壊れ方を埋め戻している
+
+ということだ。
+
+---
+
+## 6. ユースケースを組む
+
+ここでユーザー登録を effect で組んでみる。
+
+```ts
+import { Context, Effect } from "effect"
+
+type RegistrationInput = {
   name: string
   email: string
 }
 
 type ValidationError = {
+  type: "ValidationError"
   message: string
 }
 
-type ValidName = string & { readonly _tag: "ValidName" }
-type ValidEmail = string & { readonly _tag: "ValidEmail" }
-type UserId = string & { readonly _tag: "UserId" }
-
-type CreateUserCommand = {
-  name: ValidName
-  email: ValidEmail
+type DuplicateEmail = {
+  type: "DuplicateEmail"
 }
 
-declare const toCreateUserCommand: (
-  dto: CreateUserRequestDto
-) => Result<ValidationError, CreateUserCommand>
-
-type CreateUserResult =
-  | { type: "ok"; userId: UserId }
-  | { type: "error"; error: ValidationError }
-```
-
-ここでは成功と失敗が同じレベルで現れている。
-
-また、受信した `DTO` と、検証後にしか作れない `CreateUserCommand` を分けている。
-
-外部入力の `string` と、意味を持つ `ValidEmail` や `UserId` を同一視しないことで、
-「まだ汚れている値」と「境界を通過した値」の差がコード上に出る。
-
-これだけでも接続面の強度はかなり変わる。
-
-### 数学的補足
-
-API は外部世界との射である。
-
-そのため内部よりも、境界条件の明示が重要になる。
-
-設計の要点は「内部でうまく処理する」ことより、「不正な射が入れないようにする」ことにある。
-
-### まとめ
-
-API 設計は I/O の整理ではない。
-
-合成可能な境界を、外部に対してどこまで保証するかの設計である。
-
----
-
-## Chapter 44：フロントエンド
-
-### 問題提起
-
-フロントエンドのコードベースが壊れる典型は、UI が難しいからではない。
-
-状態が雑に混ざるからである。
-
-継続ケースの「ユーザー登録」で言えば、
-入力中のフォーム、送信中、入力エラー、登録成功、登録失敗が
-一つの画面に同居する。
-
-たとえば次のような値が一つのコンポーネントに同居し始める。
-
-- フォーム入力中の値
-- 送信中フラグ
-- バリデーションエラー
-- 取得済みサーバーデータ
-- 一時的な UI 状態
-
-これらを全部 `useState` の断片で持ち始めると、局所的には書けても全体は壊れやすくなる。
-
-### 直感的説明
-
-フロントエンドは見た目の問題ではない。
-
-状態遷移の問題である。
-
-つまり本質は、
-
-- 今どの状態か
-- どのイベントで次へ進むか
-- どの失敗を UI に表示するか
-
-をきちんと分けることにある。
-
-一番危険なのは、`null` と `boolean` と `string | undefined` でアプリケーション状態を表すことだ。
-
-それでは意味が分散し、画面全体の構造が読めなくなる。
-
-ユーザー登録画面でも、
-`isLoading`, `errorMessage`, `createdUserId`, `draftEmail`
-のような断片だけで状態を表し始めると、
-「今どの段階なのか」が UI から読めなくなる。
-
-### 抽象の導入
-
-フロントエンドこそ ADT が効く。
-
-ロード中、成功、失敗、未入力、送信中。
-
-こうした状態は union として表した方が強い。
-
-ユーザー登録の継続ケースで言えば、
-「入力中の状態」と「送信済みで結果待ちの状態」と
-「登録成功後の状態」は、別の型として分かれている方がよい。
-
-なぜなら UI は、状態の関数として描画されるべきだからだ。
-
-```text
-State -> View
-```
-
-この視点に立つと、UI は副作用の塊ではなく、状態からビューへの写像になる。
-
-### TypeScriptコード
-
-```ts
-type RegistrationForm = {
-  name: string
-  email: string
+type DatabaseUnavailable = {
+  type: "DatabaseUnavailable"
 }
 
-type RegistrationScreenState =
-  | { type: "editing"; form: RegistrationForm }
-  | { type: "submitting"; form: RegistrationForm }
-  | { type: "validationError"; form: RegistrationForm; message: string }
-  | { type: "registered"; userId: string }
-  | { type: "serverError"; message: string }
-
-const renderTitle = (state: RegistrationScreenState): string => {
-  switch (state.type) {
-    case "editing":
-      return "create user"
-    case "submitting":
-      return "creating..."
-    case "validationError":
-      return "fix input"
-    case "registered":
-      return `created: ${state.userId}`
-    case "serverError":
-      return "try again"
-  }
-}
-```
-
-これは小さな例だが、「ユーザー登録画面が取りうる形」を UI の手前で閉じている。
-
-そのぶん描画は単純になる。
-
-### 数学的補足
-
-状態空間が明示されると、イベント処理は状態遷移系として読める。
-
-ここで大切なのは、イベントハンドラの数ではなく、許される遷移の集合である。
-
-### まとめ
-
-フロントエンドの設計は、コンポーネント分割より先に状態分割で決まる。
-
-UI を状態の写像として読めるようにすることが、壊れにくさの出発点である。
-
----
-
-## Chapter 45：バックエンド
-
-### 問題提起
-
-バックエンドでは、関数はしばしば最初から副作用を背負っている。
-
-- DB に読む
-- 外部 API を叩く
-- キューへ積む
-- ログを書く
-
-ユーザー登録なら、典型的には
-「入力を検証する」「ユーザーを保存する」「歓迎メールを送る」が並ぶ。
-
-そのため実装を先に書くと、すぐに「読んで、判定して、保存して、通知して」が一つの関数へ溶ける。
-
-これが最も危険な形である。
-
-なぜなら、
-
-- ドメイン判断
-- 副作用
-- 依存関係
-- エラー処理
-
-が分離されず、レビュー不能になるからだ。
-
-### 直感的説明
-
-バックエンドで守るべき原則は単純である。
-
-判断と実行を分ける。
-
-たとえばユーザー登録なら、
-「この入力は登録可能か」は純粋なドメイン判断でありうる。
-
-一方で「DB に保存する」「メールを送る」は Effect である。
-
-この二つを最初から混ぜると、業務ルールの変更もインフラ変更も同時に波及する。
-
-### 抽象の導入
-
-バックエンドでは、関数の層を分けるとよい。
-
-- 純粋なドメイン関数
-- Effect を返すアプリケーション関数
-- 実際に実行するインフラ層
-
-この分離により、合成規則がはっきりする。
-
-ドメイン関数は `A -> B`。
-
-ユースケースは `A -> Effect<R, E, B>`。
-
-実行は境界で一度だけ行う。
-
-### TypeScriptコード
-
-```ts
-type CreateUserInput = {
-  name: string
-  email: string
+type NotificationError = {
+  type: "NotificationError"
 }
 
 type ValidUser = {
   name: string
-  email: string
+  email: ValidEmail
 }
 
-type ValidationError = {
-  message: string
-}
+type ValidEmail = string & { readonly _tag: "ValidEmail" }
 
-type Result<E, A> =
-  | { type: "ok"; value: A }
-  | { type: "error"; error: E }
+class UserRepository extends Context.Tag("UserRepository")<
+  UserRepository,
+  {
+    readonly insert: (
+      user: ValidUser
+    ) => Effect.Effect<
+      { userId: string },
+      DuplicateEmail | DatabaseUnavailable
+    >
+  }
+>() {}
 
-type InfraError =
-  | { type: "database"; message: string }
-  | { type: "notification"; message: string }
+class Mailer extends Context.Tag("Mailer")<
+  Mailer,
+  {
+    readonly sendWelcome: (
+      email: ValidEmail
+    ) => Effect.Effect<void, NotificationError>
+  }
+>() {}
 
-const validateUser = (
-  input: CreateUserInput
-): Result<ValidationError, ValidUser> =>
+const validate = (
+  input: RegistrationInput
+): Effect.Effect<ValidUser, ValidationError> =>
   input.email.includes("@")
-    ? {
-        type: "ok",
-        value: { name: input.name, email: input.email },
-      }
-    : {
-        type: "error",
-        error: { message: "invalid email" },
-      }
+    ? Effect.succeed({
+        name: input.name,
+        email: input.email as ValidEmail,
+      })
+    : Effect.fail({
+        type: "ValidationError",
+        message: "invalid email",
+      })
 
-type AsyncResult<E, A> = Promise<Result<E, A>>
+const registerUser = (
+  input: RegistrationInput
+): Effect.Effect<
+  { userId: string },
+  ValidationError | DuplicateEmail | DatabaseUnavailable | NotificationError,
+  UserRepository | Mailer
+> =>
+  Effect.gen(function* () {
+    const validUser = yield* validate(input)
+    const userRepository = yield* UserRepository
+    const mailer = yield* Mailer
 
-type SaveUser = (user: ValidUser) => AsyncResult<InfraError, { userId: string }>
-type SendWelcomeMail = (user: ValidUser) => AsyncResult<InfraError, void>
+    const saved = yield* userRepository.insert(validUser)
+    yield* mailer.sendWelcome(validUser.email)
 
-const registerUser = async (
-  input: CreateUserInput,
-  saveUser: SaveUser,
-  sendWelcomeMail: SendWelcomeMail
-): AsyncResult<ValidationError | InfraError, { userId: string }> => {
-  const validated = validateUser(input)
+    return { userId: saved.userId }
+  })
+```
 
-  if (validated.type === "error") {
-    return validated
-  }
+ここで起きていることは、見た目より単純である。
 
-  const saved = await saveUser(validated.value)
-  if (saved.type === "error") {
-    return saved
-  }
+1. 純粋に近い検証を行う
+2. repository へ保存する
+3. mailer で通知する
+4. 最後に成功値を返す
 
-  const notified = await sendWelcomeMail(validated.value)
-  if (notified.type === "error") {
-    return notified
-  }
+違うのは、その全体が
 
-  return { type: "ok", value: { userId: saved.value.userId } }
+- 何に依存し
+- どう失敗し
+- 何に成功するか
+
+を失わずに一つの計算として保持されていることだ。
+
+これが `async/await` との決定的な差になる。
+
+---
+
+## 7. HTTP 境界でどう使うか
+
+多くの開発者が最初につまずくのは、
+
+> では結局、どこで `runPromise` するのか
+
+という点である。
+
+答えは単純で、実行は境界で一度だけ行う。
+
+たとえば HTTP handler なら、そこで初めて effect を実行する。
+
+```ts
+import { Effect, Layer } from "effect"
+
+const appLayer = Layer.mergeAll(
+  liveUserRepositoryLayer,
+  liveMailerLayer
+)
+
+export const postRegisterUser = async (req: {
+  body: RegistrationInput
+}) => {
+  const program = registerUser(req.body).pipe(
+    Effect.provide(appLayer),
+    Effect.match({
+      onFailure: (error) => {
+        switch (error.type) {
+          case "ValidationError":
+            return { status: 400, body: error }
+          case "DuplicateEmail":
+            return { status: 409, body: error }
+          case "DatabaseUnavailable":
+          case "NotificationError":
+            return { status: 503, body: error }
+        }
+      },
+      onSuccess: (result) => ({
+        status: 201,
+        body: result,
+      }),
+    })
+  )
+
+  return Effect.runPromise(program)
 }
 ```
 
-ここでは「登録可能かを判断すること」と
-「保存・通知を実行すること」を分けている。
+この形の利点は、ドメインロジックの中に
 
-この分離があるだけで、設計はかなり読みやすくなる。
+- HTTP ステータス
+- JSON 変換
+- リクエストオブジェクト
 
-重要なのは、バリデーション失敗を
-「たまたま別の形の値が返る場合」として扱うことではない。
+が漏れ込まないことだ。
 
-I/O の失敗も含めて、成功と失敗を判別可能な構造として接続面に露出させることで、
-後続の合成規則を明確にすることである。
+ドメインは effect を返す。
+HTTP 層はその effect を実行して、外部世界の形式へ変換する。
 
-### 数学的補足
+境界がかなり明確になる。
 
-バックエンドの設計を圏論の言葉で言い直す必要はない。
+---
 
-だが、射の合成という視点は非常に有効である。
+## 8. tryPromise をどう使うか
 
-純粋な判断を先に閉じ、その後ろに Effectful な射を接続することで、責務境界が明確になる。
+既存コードに入れるときは、`Promise` API をいきなり消せないことが多い。
 
-### まとめ
+その場合は `Effect.tryPromise` が橋になる。
 
-バックエンドで重要なのは、フレームワークの作法より、判断と実行の分離である。
+```ts
+type FetchUserError =
+  | { type: "NetworkError"; message: string }
+  | { type: "DecodeError"; message: string }
 
-その分離がなければ、コードは動いても構造は育たない。
+const loadUser = (
+  id: string
+): Effect.Effect<User, FetchUserError> =>
+  Effect.tryPromise({
+    try: async () => {
+      const response = await fetch(`/api/users/${id}`)
+      const json = await response.json()
+      return decodeUser(json)
+    },
+    catch: (error) => ({
+      type: "NetworkError",
+      message: String(error),
+    }),
+  })
+```
+
+ただし、ここで止まってはいけない。
+
+`tryPromise` は導入口としては有効だが、
+何でも例外から回収するだけだと、失敗の粒度が粗いまま残る。
+
+実務では次の順で整えるとよい。
+
+1. まず例外を型付きエラーへ回収する
+2. 次に `Schema` や decoder で入力検証を分ける
+3. 最後に repository / service 境界ごとに失敗を分解する
+
+---
+
+## 9. Schema と組み合わせる
+
+effect の強みは、I/O と検証を一つの世界観で接続しやすい点にもある。
+
+外部入力は汚れている。
+
+したがって、HTTP で受けた JSON をそのままドメインへ流してはならない。
+
+```ts
+import { Effect, Schema } from "effect"
+
+const RegistrationInputSchema = Schema.Struct({
+  name: Schema.String,
+  email: Schema.String,
+})
+
+type RegistrationInput = Schema.Schema.Type<typeof RegistrationInputSchema>
+
+type RequestDecodeError = {
+  type: "RequestDecodeError"
+  message: string
+}
+
+const decodeRegistrationInput = (
+  raw: unknown
+): Effect.Effect<RegistrationInput, RequestDecodeError> =>
+  Schema.decodeUnknown(RegistrationInputSchema)(raw).pipe(
+    Effect.mapError((error) => ({
+      type: "RequestDecodeError",
+      message: String(error),
+    }))
+  )
+```
+
+この段階で、
+
+- JSON として正しいか
+- ドメインとして妥当か
+
+を分けられる。
+
+これは Part 5 の
+
+- 未検証入力
+- 検証済み値
+
+の分離を、そのまま実務へ接続した形である。
+
+---
+
+## 10. ログと観測を後から差し込める
+
+effect を導入する利点は、処理の前後に観測を挿しやすいことにもある。
+
+```ts
+const program = registerUser(input).pipe(
+  Effect.tap(() => Effect.log("registerUser started")),
+  Effect.tapBoth({
+    onFailure: (error) => Effect.logError(error),
+    onSuccess: (result) => Effect.log(`created: ${result.userId}`),
+  })
+)
+```
+
+ここで重要なのは、ログが業務ロジック本体に溶けていないことだ。
+
+「何をするか」と「どう観測するか」を分けたまま接続できる。
+
+これは、計算を値として持っていることの直接の利益である。
+
+---
+
+## 11. よくある失敗
+
+`effect-ts` 導入時には、いくつか典型的な失敗がある。
+
+### 11-1. 全部を effect にする
+
+純粋関数まで無差別に `Effect` 化すると、かえって構造が見えなくなる。
+
+純粋に書ける部分は、普通の関数でよい。
+
+effect にすべきなのは、
+
+- 失敗を明示したい箇所
+- 依存を外出ししたい箇所
+- 実行を遅らせたい箇所
+
+である。
+
+### 11-2. エラー型を `unknown` のままにする
+
+`Effect<_, unknown, _>` は、例外より少しましなだけで、設計としてはまだ弱い。
+
+利用者が判断できる単位へ分解した方がよい。
+
+### 11-3. `Layer` を巨大化させる
+
+`Layer` は便利だが、全依存を一つの巨大 layer に押し込むと、結局構造を失う。
+
+小さな service と小さな layer を、必要なところで合成した方が保守しやすい。
+
+### 11-4. 実行境界を守らない
+
+途中の service 層で `Effect.runPromise` し始めると、設計はすぐに壊れる。
+
+一度 effect を作ったら、実行はできるだけ外側まで遅らせた方がよい。
+
+---
+
+## 12. 実務導入の最短ルート
+
+もし既存の Node.js / TypeScript プロジェクトへ導入するなら、現実的な順序は次になる。
+
+1. まず外部 API 呼び出しを `Effect.tryPromise` で包む
+2. エラーを `Error` 一発ではなく ADT に分ける
+3. repository / mailer / queue を service として切り出す
+4. HTTP handler だけで `runPromise` する
+5. 入力デコードに `Schema` を使う
+6. 最後に `Layer` で本番実装とテスト実装を差し替える
+
+この順番なら、既存アプリケーションを全部書き換えなくても、
+構造の強いところから少しずつ広げられる。
+
+---
+
+## 13. まとめ
+
+`effect-ts` の価値は、便利メソッドの多さではない。
+
+本質は、
+
+- 依存を型へ戻す
+- 失敗を型へ戻す
+- 実行を境界へ押し戻す
+- 合成してから観測・実行する
+
+という構造を、TypeScript の実務で保てることにある。
+
+Part 6 の文脈で言い直せば、
+
+> 副作用をなくすのではなく、副作用がどの条件で成立し、どこで実行されるかを設計可能にする
+
+ということである。
+
+その意味で `effect-ts` は、抽象理論の応用例ではない。
+
+構造を失わずに現場へ降りるための、かなり実践的な橋である。
