@@ -87,6 +87,17 @@ Functor とは、文脈を保存したまま中身の値を写す構造である
 
 直感的には、次の写像を、
 
+```mermaid
+flowchart TD
+  subgraph Plain["Plain world"]
+    A["A"] -->|f| B["B"]
+  end
+
+  subgraph Context["Context world"]
+    FA["F<A>"] -->|map(f)| FB["F<B>"]
+  end
+```
+
 ```text
 A -> B
 ```

@@ -224,6 +224,17 @@ const result = isLongName(nameLength(normalizeName("  Ada Lovelace  ")))
 string -> string -> number -> boolean
 ```
 
+```mermaid
+flowchart LR
+  A["Raw Input"] --> B["Normalize Name"]
+  B --> C["Name Length"]
+  C --> D["Long Name Check"]
+
+  A1["string"] --> B1["string"]
+  B1 --> C1["number"]
+  C1 --> D1["boolean"]
+```
+
 ここではじめて、プログラムの本体が「関数」ではなく「接続」にあることが見える。
 
 ### 直感的説明

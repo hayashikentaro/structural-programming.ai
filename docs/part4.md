@@ -78,6 +78,14 @@ A -> B
 
 しかし、失敗するかもしれない計算はこうなる。
 
+```mermaid
+flowchart TD
+  A["F<A>"] -->|map: A -> F<B>| B["F<F<B>>"]
+  B -->|flatten| C["F<B>"]
+
+  A -->|flatMap| C
+```
+
 ```text
 A -> Option<B>
 ```
