@@ -49,7 +49,7 @@
 
 - [Part 6：副作用とEffect](part6.md)
   - [Chapter 36：副作用とは何か](part6.md#chapter-36副作用とは何か)
-  - [Chapter 37：遅延評価](part6.md#chapter-37遅延評価)
+  - [Chapter 37：実行を後ろへ送る](part6.md#chapter-37実行を後ろへ送る)
   - [Chapter 38：Effectシステム](part6.md#chapter-38effectシステム)
   - [Chapter 39：effect-tsとの接続](part6.md#chapter-39effect-tsとの接続)
 
