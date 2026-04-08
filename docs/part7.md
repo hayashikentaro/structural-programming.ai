@@ -110,7 +110,7 @@ API は通信仕様ではない。
 ### TypeScriptコード
 
 ```ts
-type CreateUserPayload = {
+type CreateUserRequestDto = {
   name: string
   email: string
 }
@@ -119,7 +119,18 @@ type ValidationError = {
   message: string
 }
 
+type ValidName = string & { readonly _tag: "ValidName" }
+type ValidEmail = string & { readonly _tag: "ValidEmail" }
 type UserId = string & { readonly _tag: "UserId" }
+
+type CreateUserCommand = {
+  name: ValidName
+  email: ValidEmail
+}
+
+declare const toCreateUserCommand: (
+  dto: CreateUserRequestDto
+) => Result<ValidationError, CreateUserCommand>
 
 type CreateUserResult =
   | { type: "ok"; userId: UserId }
@@ -128,7 +139,10 @@ type CreateUserResult =
 
 ここでは成功と失敗が同じレベルで現れている。
 
-また、外部入力の `string` と、登録後に意味を持つ `UserId` を分けている。
+また、受信した `DTO` と、検証後にしか作れない `CreateUserCommand` を分けている。
+
+外部入力の `string` と、意味を持つ `ValidEmail` や `UserId` を同一視しないことで、
+「まだ汚れている値」と「境界を通過した値」の差がコード上に出る。
 
 これだけでも接続面の強度はかなり変わる。
 
@@ -339,6 +353,10 @@ type Result<E, A> =
   | { type: "ok"; value: A }
   | { type: "error"; error: E }
 
+type InfraError =
+  | { type: "database"; message: string }
+  | { type: "notification"; message: string }
+
 const validateUser = (
   input: CreateUserInput
 ): Result<ValidationError, ValidUser> =>
@@ -352,14 +370,16 @@ const validateUser = (
         error: { message: "invalid email" },
       }
 
-type SaveUser = (user: ValidUser) => Promise<{ userId: string }>
-type SendWelcomeMail = (user: ValidUser) => Promise<void>
+type AsyncResult<E, A> = Promise<Result<E, A>>
+
+type SaveUser = (user: ValidUser) => AsyncResult<InfraError, { userId: string }>
+type SendWelcomeMail = (user: ValidUser) => AsyncResult<InfraError, void>
 
 const registerUser = async (
   input: CreateUserInput,
   saveUser: SaveUser,
   sendWelcomeMail: SendWelcomeMail
-): Promise<{ type: "ok"; userId: string } | { type: "error"; error: ValidationError }> => {
+): AsyncResult<ValidationError | InfraError, { userId: string }> => {
   const validated = validateUser(input)
 
   if (validated.type === "error") {
@@ -367,19 +387,28 @@ const registerUser = async (
   }
 
   const saved = await saveUser(validated.value)
-  await sendWelcomeMail(validated.value)
+  if (saved.type === "error") {
+    return saved
+  }
 
-  return { type: "ok", userId: saved.userId }
+  const notified = await sendWelcomeMail(validated.value)
+  if (notified.type === "error") {
+    return notified
+  }
+
+  return { type: "ok", value: { userId: saved.value.userId } }
 }
 ```
 
-ここでは「登録可能かを判断すること」と「保存・通知を実行すること」を分けている。
+ここでは「登録可能かを判断すること」と
+「保存・通知を実行すること」を分けている。
 
 この分離があるだけで、設計はかなり読みやすくなる。
 
-重要なのは、バリデーションの失敗を「たまたま別の形の値が返る場合」として扱うことではない。
+重要なのは、バリデーション失敗を
+「たまたま別の形の値が返る場合」として扱うことではない。
 
-成功と失敗を判別可能な構造として接続面に露出させることで、
+I/O の失敗も含めて、成功と失敗を判別可能な構造として接続面に露出させることで、
 後続の合成規則を明確にすることである。
 
 ### 数学的補足

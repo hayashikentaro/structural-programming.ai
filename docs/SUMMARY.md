@@ -65,6 +65,6 @@
   - [Chapter 49：レビュー戦略](part8.md#chapter-49レビュー戦略)
 
 - [Part 9：抽象の起源](part9.md)
-  - [Chapter 40：随伴の直感](part9.md#chapter-40随伴の直感)
-  - [Chapter 41：Free構造](part9.md#chapter-41free構造)
-  - [Chapter 42：DSL設計](part9.md#chapter-42dsl設計)
+  - [Chapter 50：随伴の直感](part9.md#chapter-50随伴の直感)
+  - [Chapter 51：Free構造](part9.md#chapter-51free構造)
+  - [Chapter 52：DSL設計](part9.md#chapter-52dsl設計)
