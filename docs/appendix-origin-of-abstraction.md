@@ -36,7 +36,7 @@ Part 8 までで十分に手応えを得られているなら、
 
 ---
 
-## Chapter 50：随伴の直感
+## Chapter 60：随伴の直感
 
 ### 問題提起
 
@@ -143,7 +143,7 @@ Hom_D(F(A), B) ≅ Hom_C(A, G(B))
 
 ---
 
-## Chapter 51：Free構造
+## Chapter 61：Free構造
 
 ### 問題提起
 
@@ -238,7 +238,7 @@ Free 構造は抽象の遊びではない。
 
 ---
 
-## Chapter 52：DSL設計
+## Chapter 62：DSL設計
 
 ### 問題提起
 
