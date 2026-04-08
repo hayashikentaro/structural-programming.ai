@@ -68,5 +68,3 @@
   - [Chapter 47：役割分担](part9.md#chapter-47役割分担)
   - [Chapter 48：プロンプト設計](part9.md#chapter-48プロンプト設計)
   - [Chapter 49：レビュー戦略](part9.md#chapter-49レビュー戦略)
-
-- [補論：関数型プログラミングに通じたエンジニアからのレビューにどう向き合うか](fp-review-response.md)
