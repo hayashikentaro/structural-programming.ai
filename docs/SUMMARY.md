@@ -83,3 +83,6 @@
   - [Chapter 60：随伴の直感](appendix-origin-of-abstraction.md#chapter-60随伴の直感)
   - [Chapter 61：Free構造](appendix-origin-of-abstraction.md#chapter-61free構造)
   - [Chapter 62：DSL設計](appendix-origin-of-abstraction.md#chapter-62dsl設計)
+
+- [Part 8：次の時代へ](part8.md)
+  - [Chapter 63：構造を設計する人へ](part8.md#chapter-63構造を設計する人へ)
