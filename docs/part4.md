@@ -497,32 +497,47 @@ flatMap(ma, a => flatMap(f(a), g))
 
 結合律は、計算のつなぎ方が括弧の位置に依存しないことを表す。
 
+ここまでは直感を優先して `A | null` という簡約表現を使ってきた。
+
+ただし Monad 則のように構造そのものを論じる段階では、
+`Some` と `None` を明確に区別できる形へ移る方が安全である。
+
 ---
 
 ### TypeScriptコード
 
 ```ts
-type Option<A> = A | null
+type Option<A> =
+  | { type: "none" }
+  | { type: "some"; value: A }
 
-const ofOption = <A>(value: A): Option<A> =>
-  value
+const none = <A = never>(): Option<A> => ({
+  type: "none",
+})
+
+const some = <A>(value: A): Option<A> => ({
+  type: "some",
+  value,
+})
+
+const ofOption = some
 
 const flatMapOption = <A, B>(
   fa: Option<A>,
   f: (a: A) => Option<B>
 ): Option<B> =>
-  fa === null ? null : f(fa)
+  fa.type === "none" ? none() : f(fa.value)
 
 const parseNumber = (s: string): Option<number> => {
   const n = Number(s)
-  return Number.isNaN(n) ? null : n
+  return Number.isNaN(n) ? none() : some(n)
 }
 
 const inverse = (n: number): Option<number> =>
-  n === 0 ? null : 1 / n
+  n === 0 ? none() : some(1 / n)
 
 const label = (n: number): Option<string> =>
-  `value = ${n}`
+  some(`value = ${n}`)
 
 const a = "2"
 
@@ -533,7 +548,7 @@ const leftIdentityRight =
   parseNumber(a)
 
 const ma: Option<number> =
-  10
+  some(10)
 
 const rightIdentityLeft =
   flatMapOption(ma, ofOption)

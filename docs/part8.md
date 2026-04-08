@@ -335,12 +335,22 @@ type ValidationError = {
   message: string
 }
 
+type Result<E, A> =
+  | { type: "ok"; value: A }
+  | { type: "error"; error: E }
+
 const validateUser = (
   input: CreateUserInput
-): ValidUser | ValidationError =>
+): Result<ValidationError, ValidUser> =>
   input.email.includes("@")
-    ? { name: input.name, email: input.email }
-    : { message: "invalid email" }
+    ? {
+        type: "ok",
+        value: { name: input.name, email: input.email },
+      }
+    : {
+        type: "error",
+        error: { message: "invalid email" },
+      }
 
 type SaveUser = (user: ValidUser) => Promise<{ userId: string }>
 type SendWelcomeMail = (user: ValidUser) => Promise<void>
@@ -352,12 +362,12 @@ const registerUser = async (
 ): Promise<{ type: "ok"; userId: string } | { type: "error"; error: ValidationError }> => {
   const validated = validateUser(input)
 
-  if ("message" in validated) {
-    return { type: "error", error: validated }
+  if (validated.type === "error") {
+    return validated
   }
 
-  const saved = await saveUser(validated)
-  await sendWelcomeMail(validated)
+  const saved = await saveUser(validated.value)
+  await sendWelcomeMail(validated.value)
 
   return { type: "ok", userId: saved.userId }
 }
@@ -366,6 +376,11 @@ const registerUser = async (
 ここでは「登録可能かを判断すること」と「保存・通知を実行すること」を分けている。
 
 この分離があるだけで、設計はかなり読みやすくなる。
+
+重要なのは、バリデーションの失敗を「たまたま別の形の値が返る場合」として扱うことではない。
+
+成功と失敗を判別可能な構造として接続面に露出させることで、
+後続の合成規則を明確にすることである。
 
 ### 数学的補足
 

@@ -267,6 +267,15 @@ type LoadUser = Effect<Config, HttpError, User>
 
 これは実装ではなく形の説明である。
 
+ここでは概念図として `Effect<R, E, A>` と書き、
+`依存・失敗・成功` の順で読んでいる。
+
+ただし `effect` ライブラリの実際の API では、
+型引数は `Effect<A, E, R>` の順で表される。
+
+本書では構造を理解しやすくするために前者の順で説明し、
+実コードとの接続時に後者へ読み替える。
+
 重要なのは、`User` を返すことしか見えなかった計算が、依存と失敗を伴う構造として読めるようになることだ。
 
 ### 数学的補足
@@ -327,12 +336,18 @@ Effect システムは豪華な非同期ライブラリではない。
 ```ts
 import { Effect } from "effect"
 
+type Config = {
+  apiBaseUrl: string
+}
+
 type User = {
   id: string
   name: string
 }
 
-declare const loadUser: (id: string) => Effect.Effect<User, Error>
+declare const loadUser: (
+  id: string
+) => Effect.Effect<User, Error, Config>
 
 declare const renderUser: (user: User) => string
 
