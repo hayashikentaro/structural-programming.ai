@@ -53,18 +53,18 @@
   - [Chapter 38：Effectシステム](part6.md#chapter-38effectシステム)
   - [Chapter 39：effect-tsとの接続](part6.md#chapter-39effect-tsとの接続)
 
-- [Part 7：抽象の起源](part7.md)
-  - [Chapter 40：随伴の直感](part7.md#chapter-40随伴の直感)
-  - [Chapter 41：Free構造](part7.md#chapter-41free構造)
-  - [Chapter 42：DSL設計](part7.md#chapter-42dsl設計)
-
-- [Part 8：実践](part8.md)
+- [Part 7：実践](part8.md)
   - [Chapter 43：API設計](part8.md#chapter-43api設計)
   - [Chapter 44：フロントエンド](part8.md#chapter-44フロントエンド)
   - [Chapter 45：バックエンド](part8.md#chapter-45バックエンド)
 
-- [Part 9：AI時代の開発](part9.md)
+- [Part 8：AI時代の開発](part9.md)
   - [Chapter 46：vibeコーディング](part9.md#chapter-46vibeコーディング)
   - [Chapter 47：役割分担](part9.md#chapter-47役割分担)
   - [Chapter 48：プロンプト設計](part9.md#chapter-48プロンプト設計)
   - [Chapter 49：レビュー戦略](part9.md#chapter-49レビュー戦略)
+
+- [Part 9：抽象の起源](part7.md)
+  - [Chapter 40：随伴の直感](part7.md#chapter-40随伴の直感)
+  - [Chapter 41：Free構造](part7.md#chapter-41free構造)
+  - [Chapter 42：DSL設計](part7.md#chapter-42dsl設計)
