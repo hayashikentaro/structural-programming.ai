@@ -80,8 +80,8 @@ A -> B
 
 ```mermaid
 flowchart TD
-  A["F<A>"] -->|map: A -> F<B>| B["F<F<B>>"]
-  B -->|flatten| C["F<B>"]
+  A["F(A)"] -->|map: A -> F(B)| B["F(F(B))"]
+  B -->|flatten| C["F(B)"]
 
   A -->|flatMap| C
 ```

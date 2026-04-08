@@ -94,7 +94,7 @@ flowchart TD
   end
 
   subgraph Context["Context world"]
-    FA["F<A>"] -->|map(f)| FB["F<B>"]
+    FA["F(A)"] -->|map(f)| FB["F(B)"]
   end
 ```
 
